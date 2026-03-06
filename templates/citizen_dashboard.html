@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+  {% block content %}
+  <h2>Citizen Dashboard</h2>
+  <p>Welcome, {{ current_user.name }}!</p>
+  <a href="/submit_complaint" class="btn btn-saffron text-white mb-4">Report a New Problem</a>
+
+  <h4>My Complaints</h4>
+  <div class="row">
+      {% for c in complaints %}
+      <div class="col-md-6 mb-3">
+          <div class="card p-3">
+              <div class="d-flex justify-content-between">
+                  <h5>{{ c.title }}</h5>
+                  <span class="status-badge status-{{ c.status|replace(' ', '-') }}">{{ c.status }}</span>
+              </div>
+              <p class="text-muted mb-1">{{ c.complaint_id }} | {{ c.category }} | Priority: <span class="priority-{{ c.priority }}">{{ c.priority }}</span></p>
+              <p>{{ c.description }}</p>
+              <div class="timeline mt-3 mb-2">
+                  <div class="timeline-step {% if c.status in ['Submitted', 'In Progress', 'Resolved'] %}active{% endif %}" title="Submitted">1</div>
+                  <div class="timeline-step {% if c.status in ['In Progress', 'Resolved'] %}active{% endif %}" title="In Progress">2</div>
+                  <div class="timeline-step {% if c.status == 'Resolved' %}active{% endif %}" title="Resolved">3</div>
+              </div>
+              <p class="text-center text-muted small">Submitted &rarr; In Progress &rarr; Resolved</p>
+          </div>
+      </div>
+      {% else %}
+      <p>No complaints reported yet.</p>
+      {% endfor %}
+  </div>
+  {% endblock %}

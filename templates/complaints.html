@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+  {% block content %}
+  <h2 class="mb-4">All Public Complaints</h2>
+  <div class="row">
+      {% for c in complaints %}
+      <div class="col-md-4 mb-4">
+          <div class="card p-3 h-100">
+              <div class="d-flex justify-content-between">
+                  <h5 class="text-truncate" title="{{ c.title }}">{{ c.title }}</h5>
+              </div>
+              <p class="text-muted small mb-2">{{ c.timestamp.strftime('%Y-%m-%d %H:%M') }} | Ward {{ c.ward_number }}</p>
+              <p class="mb-2"><span class="status-badge status-{{ c.status|replace(' ', '-') }}">{{ c.status }}</span></p>
+              <p class="mb-0 text-muted">{{ c.department }}</p>
+          </div>
+      </div>
+      {% endfor %}
+  </div>
+  {% endblock %}

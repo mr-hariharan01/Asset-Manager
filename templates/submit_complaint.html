@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+  {% block content %}
+  <div class="card p-4 mx-auto" style="max-width: 800px;">
+      <h3>Report a Public Issue</h3>
+      <form method="POST" enctype="multipart/form-data">
+          <div class="mb-3">
+              <label>Complaint Title</label>
+              <input type="text" name="title" class="form-control" required placeholder="e.g., Streetlight not working">
+          </div>
+          <div class="mb-3">
+              <label>Description</label>
+              <textarea name="description" class="form-control" rows="4" required placeholder="Describe the problem in detail..."></textarea>
+              <small class="text-muted">AI will automatically classify the department based on your description.</small>
+          </div>
+          <div class="row">
+              <div class="col-md-6 mb-3">
+                  <label>Category</label>
+                  <select name="category" class="form-select" required>
+                      <option value="Electrical">Electricity & Streetlights</option>
+                      <option value="Sanitation">Garbage & Sanitation</option>
+                      <option value="Roads">Roads & Infrastructure</option>
+                      <option value="Water">Water Supply</option>
+                      <option value="Other">Other</option>
+                  </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                  <label>Photo Evidence (Optional)</label>
+                  <input type="file" name="image" class="form-control" accept="image/*">
+              </div>
+          </div>
+          
+          <div class="mb-3">
+              <label>Location</label>
+              <div class="d-flex mb-2">
+                  <button type="button" class="btn btn-secondary me-2" onclick="getLocation()">Get GPS Location</button>
+                  <input type="text" id="lat" name="latitude" class="form-control me-2" placeholder="Latitude" readonly>
+                  <input type="text" id="lng" name="longitude" class="form-control" placeholder="Longitude" readonly>
+              </div>
+          </div>
+          
+          <button type="submit" class="btn btn-green w-100 text-white mt-3">Submit Complaint</button>
+      </form>
+  </div>
+
+  <script>
+  function getLocation() {
+      if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+              document.getElementById('lat').value = position.coords.latitude;
+              document.getElementById('lng').value = position.coords.longitude;
+          });
+      } else {
+          alert("Geolocation is not supported by this browser.");
+      }
+  }
+  </script>
+  {% endblock %}

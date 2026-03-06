@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+  {% block content %}
+  <div class="text-center py-5">
+      <h1 class="display-4 fw-bold" style="color: var(--dark-blue);">AI Powered Smart Governance</h1>
+      <p class="lead text-muted">A transparent tracking system for public problems.</p>
+      <div class="mt-4">
+          <a href="/complaints" class="btn btn-outline-primary btn-lg me-3">View Open Issues</a>
+          <a href="/login" class="btn btn-saffron text-white btn-lg">Report a Problem</a>
+      </div>
+  </div>
+
+  <div class="row mt-5">
+      <div class="col-md-4 text-center mb-4">
+          <div class="card p-4 h-100">
+              <h4>💡 AI Classification</h4>
+              <p class="text-muted">Complaints are automatically routed to the correct department using natural language processing.</p>
+          </div>
+      </div>
+      <div class="col-md-4 text-center mb-4">
+          <div class="card p-4 h-100">
+              <h4>📍 Smart Mapping</h4>
+              <p class="text-muted">Geotagged issues help authorities visualize problem hotspots and plan resources efficiently.</p>
+          </div>
+      </div>
+      <div class="col-md-4 text-center mb-4">
+          <div class="card p-4 h-100">
+              <h4>📈 Transparent Tracking</h4>
+              <p class="text-muted">Citizens can track their complaint status from submission to resolution in real-time.</p>
+          </div>
+      </div>
+  </div>
+  {% endblock %}

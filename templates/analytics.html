@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+  {% block content %}
+  <h2 class="mb-4">Governance Analytics Dashboard</h2>
+  <div class="row mb-4">
+      <div class="col-md-4">
+          <div class="card p-4 text-center bg-primary text-white">
+              <h5>Total Complaints</h5>
+              <h2>{{ total }}</h2>
+          </div>
+      </div>
+      <div class="col-md-4">
+          <div class="card p-4 text-center bg-warning text-dark">
+              <h5>Pending / In Progress</h5>
+              <h2>{{ pending }}</h2>
+          </div>
+      </div>
+      <div class="col-md-4">
+          <div class="card p-4 text-center bg-success text-white">
+              <h5>Resolved</h5>
+              <h2>{{ resolved }}</h2>
+          </div>
+      </div>
+  </div>
+  <div class="row">
+      <div class="col-md-6 mx-auto">
+          <div class="card p-4">
+              <canvas id="statusChart"></canvas>
+          </div>
+      </div>
+  </div>
+  <script>
+  const ctx = document.getElementById('statusChart').getContext('2d');
+  new Chart(ctx, {
+      type: 'pie',
+      data: {
+          labels: ['Resolved', 'Pending'],
+          datasets: [{
+              data: [{{ resolved }}, {{ pending }}],
+              backgroundColor: ['#28a745', '#ffc107']
+          }]
+      }
+  });
+  </script>
+  {% endblock %}

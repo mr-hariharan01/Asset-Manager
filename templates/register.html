@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+  {% block content %}
+  <div class="row justify-content-center">
+      <div class="col-md-8">
+          <div class="card p-4">
+              <h3 class="text-center mb-4">Citizen Registration</h3>
+              <form method="POST">
+                  <div class="row">
+                      <div class="col-md-6 mb-3">
+                          <label>Name</label>
+                          <input type="text" name="name" class="form-control" required>
+                      </div>
+                      <div class="col-md-6 mb-3">
+                          <label>Email</label>
+                          <input type="email" name="email" class="form-control" required>
+                      </div>
+                      <div class="col-md-6 mb-3">
+                          <label>Phone</label>
+                          <input type="text" name="phone" class="form-control" required>
+                      </div>
+                      <div class="col-md-6 mb-3">
+                          <label>District</label>
+                          <input type="text" name="district" class="form-control" required>
+                      </div>
+                      <div class="col-md-6 mb-3">
+                          <label>Panchayat</label>
+                          <input type="text" name="panchayat" class="form-control" required>
+                      </div>
+                      <div class="col-md-6 mb-3">
+                          <label>Ward Number</label>
+                          <input type="number" name="ward_number" class="form-control" required>
+                      </div>
+                      <div class="col-md-6 mb-3">
+                          <label>Password</label>
+                          <input type="password" name="password" class="form-control" required>
+                      </div>
+                      <div class="col-md-6 mb-3">
+                          <label>Confirm Password</label>
+                          <input type="password" name="confirm_password" class="form-control" required>
+                      </div>
+                  </div>
+                  <button type="submit" class="btn btn-green w-100 text-white">Register</button>
+              </form>
+          </div>
+      </div>
+  </div>
+  {% endblock %}

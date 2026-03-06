@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+  {% block content %}
+  <h2>Panchayat President Dashboard</h2>
+  <div class="row">
+      <div class="col-md-12">
+          <div class="card p-4">
+              <h4>All Regional Complaints Oversight</h4>
+              <table class="table mt-3">
+                  <thead>
+                      <tr>
+                          <th>ID</th>
+                          <th>Issue</th>
+                          <th>Ward</th>
+                          <th>Dept</th>
+                          <th>Status</th>
+                          <th>Action</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      {% for c in complaints %}
+                      <tr>
+                          <td>{{ c.complaint_id }}</td>
+                          <td>{{ c.title }}</td>
+                          <td>{{ c.ward_number }}</td>
+                          <td>{{ c.department }}</td>
+                          <td><span class="status-badge status-{{ c.status|replace(' ', '-') }}">{{ c.status }}</span></td>
+                          <td>
+                              <form action="/update_complaint/{{ c.id }}" method="POST" class="d-flex">
+                                  <select name="status" class="form-select form-select-sm me-2">
+                                      <option value="Resolved" {% if c.status=='Resolved' %}selected{% endif %}>Force Resolve</option>
+                                  </select>
+                                  <button type="submit" class="btn btn-sm btn-danger">Escalate/Update</button>
+                              </form>
+                          </td>
+                      </tr>
+                      {% endfor %}
+                  </tbody>
+              </table>
+          </div>
+      </div>
+  </div>
+  {% endblock %}
