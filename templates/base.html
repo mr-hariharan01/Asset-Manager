@@ -16,34 +16,37 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark-blue sticky-top shadow-sm">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="/">
-                <i class="fas fa-shield-halved me-2"></i>
-                <span>Smart Governance</span>
+                <i class="fas fa-shield-halved me-3 fa-lg"></i>
+                <div>
+                    <span class="d-block">Smart Governance Portal</span>
+                    <span class="gov-header-subtitle">Citizen Public Service Tracking System</span>
+                </div>
             </a>
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav me-auto ps-lg-4">
                     <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/login">Report Issue</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/complaints">Track Complaint</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/login" data-t="nav_report">Report Issue</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/complaints" data-t="nav_track">Track Complaint</a></li>
                     <li class="nav-item"><a class="nav-link" href="/analytics">Public Reports</a></li>
                     <li class="nav-item"><a class="nav-link" href="#">Contact</a></li>
                 </ul>
                 <div class="d-flex align-items-center gap-2">
-                    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
+                    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Toggle Theme">
                         <i class="fas fa-moon"></i>
                     </button>
                     <button class="lang-switch" onclick="toggleLanguage()">
-                        <span class="lang-en">தமிழ்</span>
-                        <span class="lang-ta">English</span>
+                        <span class="lang-en">English | தமிழ்</span>
+                        <span class="lang-ta">தமிழ் | English</span>
                     </button>
                     {% if current_user.is_authenticated %}
                         <a class="nav-link text-white px-3" href="/login">Dashboard</a>
                         <a class="btn btn-danger btn-sm rounded-pill px-3" href="/logout">Logout</a>
                     {% else %}
-                        <a class="btn btn-saffron btn-sm rounded-pill px-3" href="/login">Login</a>
-                        <a class="btn btn-success btn-sm rounded-pill px-3" href="/register">Register</a>
+                        <a class="btn btn-saffron btn-sm rounded-pill px-4" href="/login">Login</a>
+                        <a class="btn btn-success btn-sm rounded-pill px-4" href="/register">Register</a>
                     {% endif %}
                 </div>
             </div>
@@ -68,36 +71,22 @@
 
     <footer class="mt-5">
         <div class="container">
-            <div class="row g-4">
+            <div class="row g-4 justify-content-between">
                 <div class="col-md-4">
-                    <h5>About the Portal</h5>
-                    <p class="small opacity-75">An AI-powered initiative to streamline public grievance redressal and enhance government transparency through technology.</p>
-                </div>
-                <div class="col-md-2">
-                    <h5>Quick Links</h5>
-                    <ul class="list-unstyled small opacity-75">
-                        <li><a href="#" class="text-white text-decoration-none">Privacy Policy</a></li>
-                        <li><a href="#" class="text-white text-decoration-none">Terms of Service</a></li>
-                        <li><a href="#" class="text-white text-decoration-none">Help Desk</a></li>
-                    </ul>
+                    <h6>Smart Governance Portal</h6>
+                    <p class="small mb-0">© 2026 Government Public Service initiative.</p>
                 </div>
                 <div class="col-md-3">
-                    <h5>Contact Information</h5>
-                    <p class="small opacity-75 mb-0">Email: support@gov.in</p>
-                    <p class="small opacity-75">Toll Free: 1800-11-2233</p>
+                    <h6>Contact</h6>
+                    <p class="small mb-0">support@govportal.in</p>
                 </div>
                 <div class="col-md-3">
-                    <h5>Emergency Numbers</h5>
-                    <div class="d-flex flex-wrap gap-2">
-                        <span class="badge bg-danger">Police: 100</span>
-                        <span class="badge bg-danger">Fire: 101</span>
-                        <span class="badge bg-danger">Ambulance: 102</span>
+                    <h6>Emergency</h6>
+                    <div class="d-flex gap-3">
+                        <span class="small">Police: 100</span>
+                        <span class="small">Ambulance: 108</span>
                     </div>
                 </div>
-            </div>
-            <hr class="mt-5 opacity-25">
-            <div class="text-center small opacity-50 pb-3">
-                &copy; 2026 Smart Governance Portal | MeitY Initiative
             </div>
         </div>
     </footer>
@@ -125,10 +114,12 @@
 
         const translations = {
             en: {
+                nav_report: "Report Issue",
+                nav_track: "Track Complaint",
                 hero_title: "AI Powered Smart Governance",
                 hero_subtitle: "Experience a new era of transparent and efficient public grievance redressal powered by Artificial Intelligence.",
-                report_btn: "Report Complaint",
-                track_btn: "Track Complaint",
+                report_btn: "Report a Problem",
+                track_btn: "View Open Issues",
                 feat_ai_title: "AI Classification",
                 feat_ai_desc: "Auto-routes your grievances to relevant departments using NLP.",
                 feat_map_title: "Smart Mapping",
@@ -137,15 +128,17 @@
                 feat_track_desc: "Real-time status updates from submission to resolution."
             },
             ta: {
+                nav_report: "பிரச்சினையை பதிவு செய்யவும்",
+                nav_track: "திறந்த பிரச்சினைகள்",
                 hero_title: "செயற்கை நுண்ணறிவு அடிப்படையிலான ஸ்மார்ட் நிர்வாகம்",
                 hero_subtitle: "செயற்கை நுண்ணறிவு மூலம் இயங்கும் வெளிப்படையான மற்றும் திறமையான பொது குறை தீர்க்கும் புதிய யுகத்தை அனுபவியுங்கள்.",
                 report_btn: "பிரச்சினையை பதிவு செய்யவும்",
                 track_btn: "திறந்த பிரச்சினைகள்",
-                feat_ai_title: "AI வகைப்பாடு",
+                feat_ai_title: "AI வகைப்படுத்தல்",
                 feat_ai_desc: "NLP ஐப் பயன்படுத்தி உங்கள் குறைகளைத் தொடர்புடைய துறைகளுக்குத் தானாகவே அனுப்புகிறது.",
-                feat_map_title: "ஸ்மார்ட் மேப்பிங்",
+                feat_map_title: "ஸ்மார்ட் வரைபடம்",
                 feat_map_desc: "சிறந்த வள ஒதுக்கீட்டிற்காக பிரச்சனை மையங்களை காட்சிப்படுத்துகிறது.",
-                feat_track_title: "வெளிப்படையான கண்காணிப்பு",
+                feat_track_title: "தெளிவான கண்காணிப்பு",
                 feat_track_desc: "சமர்ப்பித்தல் முதல் தீர்வு வரை நிகழ்நேர நிலை புதுப்பிப்புகள்."
             }
         };
@@ -164,7 +157,11 @@
             const savedTheme = localStorage.getItem('theme') || 'light';
             const savedLang = localStorage.getItem('lang') || 'en';
             
-            if(savedTheme === 'dark') toggleTheme();
+            if(savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.body.classList.add('dark');
+                document.getElementById('themeBtn').innerHTML = '<i class="fas fa-sun"></i>';
+            }
             document.documentElement.setAttribute('data-lang', savedLang);
             updateTranslations();
         });

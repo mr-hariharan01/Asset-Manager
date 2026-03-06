@@ -1,45 +1,45 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="hero-section text-center">
+<div class="hero-section text-center fade-in">
     <div class="container py-5">
         <h1 class="display-3 fw-bold mb-3" data-t="hero_title">AI Powered Smart Governance</h1>
         <p class="lead mb-5 opacity-90 mx-auto" style="max-width: 800px;" data-t="hero_subtitle">
             Experience a new era of transparent and efficient public grievance redressal powered by Artificial Intelligence.
         </p>
-        <div class="d-flex justify-content-center gap-3">
-            <a href="/login" class="btn btn-saffron btn-lg px-5 rounded-pill shadow" data-t="report_btn">Report Complaint</a>
-            <a href="/complaints" class="btn btn-outline-light btn-lg px-5 rounded-pill" data-t="track_btn">Track Complaint</a>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="/login" class="btn btn-saffron btn-lg px-5 rounded-pill shadow" data-t="report_btn">Report a Problem</a>
+            <a href="/complaints" class="btn btn-outline-primary-gov btn-lg px-5 rounded-pill text-white border-white" data-t="track_btn">View Open Issues</a>
         </div>
     </div>
 </div>
 
 <div class="container py-5">
     <div class="row g-4 mt-4">
-        <div class="col-md-4">
-            <div class="card p-4 h-100 text-center border-0">
-                <div class="mb-3">
-                    <i class="fas fa-brain fa-3x text-primary"></i>
+        <div class="col-md-4 fade-in" style="animation-delay: 0.2s">
+            <div class="card p-5 h-100 text-center border-0">
+                <div class="mb-4">
+                    <i class="fas fa-brain fa-4x text-primary opacity-75"></i>
                 </div>
-                <h4 class="fw-bold" data-t="feat_ai_title">AI Classification</h4>
-                <p class="text-muted small" data-t="feat_ai_desc">Complaints are automatically routed to the correct department using natural language processing.</p>
+                <h4 class="fw-bold mb-3" data-t="feat_ai_title">AI Classification</h4>
+                <p class="text-muted" data-t="feat_ai_desc">Complaints are automatically routed to the correct department using natural language processing.</p>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card p-4 h-100 text-center border-0">
-                <div class="mb-3">
-                    <i class="fas fa-map-location-dot fa-3x text-success"></i>
+        <div class="col-md-4 fade-in" style="animation-delay: 0.4s">
+            <div class="card p-5 h-100 text-center border-0">
+                <div class="mb-4">
+                    <i class="fas fa-map-location-dot fa-4x text-success opacity-75"></i>
                 </div>
-                <h4 class="fw-bold" data-t="feat_map_title">Smart Mapping</h4>
-                <p class="text-muted small" data-t="feat_map_desc">Geotagged issues help authorities visualize problem hotspots and plan resources efficiently.</p>
+                <h4 class="fw-bold mb-3" data-t="feat_map_title">Smart Mapping</h4>
+                <p class="text-muted" data-t="feat_map_desc">Geotagged issues help authorities visualize problem hotspots and plan resources efficiently.</p>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card p-4 h-100 text-center border-0">
-                <div class="mb-3">
-                    <i class="fas fa-chart-line fa-3x text-warning"></i>
+        <div class="col-md-4 fade-in" style="animation-delay: 0.6s">
+            <div class="card p-5 h-100 text-center border-0">
+                <div class="mb-4">
+                    <i class="fas fa-chart-line fa-4x text-warning opacity-75"></i>
                 </div>
-                <h4 class="fw-bold" data-t="feat_track_title">Transparent Tracking</h4>
-                <p class="text-muted small" data-t="feat_track_desc">Citizens can track their complaint status from submission to resolution in real-time.</p>
+                <h4 class="fw-bold mb-3" data-t="feat_track_title">Transparent Tracking</h4>
+                <p class="text-muted" data-t="feat_track_desc">Citizens can track their complaint status from submission to resolution in real-time.</p>
             </div>
         </div>
     </div>
