@@ -1,0 +1,429 @@
+You are an expert Python Flask full-stack developer and software architect.
+
+Build a complete professional web application called:
+
+AI Powered Smart Governance Tracking System
+
+The application must be fully functional, secure, modern, and ready for a final year engineering project demonstration.
+
+The application must run using:
+
+python app.py
+
+Do NOT use React or Node.js.
+
+------------------------------------------------
+
+TECH STACK
+
+Backend
+Python Flask
+
+Frontend
+HTML
+CSS
+JavaScript
+Bootstrap
+
+Database
+SQLite
+
+Charts
+Chart.js
+
+Maps
+Leaflet.js
+
+------------------------------------------------
+
+SYSTEM PURPOSE
+
+The platform allows citizens to report public problems and enables government officials to track, manage, and resolve them using a multi-level governance workflow.
+
+Example complaints:
+
+Street light not working
+Garbage not collected
+Road damage
+Water leakage
+Drainage blockage
+Public sanitation issue
+
+------------------------------------------------
+
+USER ROLES
+
+Implement role based authentication with a single login page.
+
+Roles:
+
+Citizen
+Ward Member
+Department Officer
+Panchayat President
+Admin
+
+After login redirect automatically:
+
+Citizen → Citizen Dashboard
+Ward Member → Ward Dashboard
+Department Officer → Officer Dashboard
+President → President Dashboard
+Admin → Admin Dashboard
+
+Passwords must be securely hashed.
+
+------------------------------------------------
+
+CITIZEN REGISTRATION
+
+Allow citizen self registration.
+
+Fields:
+
+Name
+Email
+Phone
+Password
+Confirm Password
+District
+Panchayat
+Ward Number
+
+Role automatically assigned as Citizen.
+
+------------------------------------------------
+
+DEMO LOGIN ACCOUNTS
+
+Citizen
+citizen@test.com
+Password: citizen123
+
+Ward Member
+ward@test.com
+Password: ward123
+
+Department Officer
+officer@test.com
+Password: officer123
+
+President
+president@test.com
+Password: president123
+
+Admin
+admin@test.com
+Password: admin123
+
+------------------------------------------------
+
+CITIZEN FEATURES
+
+Citizen dashboard must allow:
+
+Submit complaint
+Upload photo evidence
+Add complaint description
+Select complaint category
+Auto capture GPS location
+Track complaint status
+View complaint history
+Receive notifications
+Give feedback after resolution
+Edit profile
+View nearby complaints
+
+Each complaint must generate a unique Complaint ID.
+
+------------------------------------------------
+
+COMPLAINT DATA
+
+Complaint fields:
+
+Complaint ID
+Title
+Description
+Category
+Department
+Ward Number
+GPS Location
+Image Upload
+Priority
+Status
+Timestamp
+
+------------------------------------------------
+
+AI COMPLAINT CLASSIFICATION
+
+Automatically detect department based on keywords.
+
+Example:
+
+streetlight → Electricity Department
+garbage → Sanitation Department
+road → Public Works Department
+water leak → Water Supply Department
+
+------------------------------------------------
+
+SMART PRIORITY SYSTEM
+
+Automatically assign priority.
+
+High Priority
+Safety issues
+
+Medium Priority
+Public services
+
+Low Priority
+Minor problems
+
+------------------------------------------------
+
+DUPLICATE COMPLAINT DETECTION
+
+Detect complaints with similar text and location.
+
+If duplicate found:
+
+Merge complaints
+Increase complaint count
+Show number of citizens reporting issue
+
+------------------------------------------------
+
+COMPLAINT ESCALATION WORKFLOW
+
+Citizen
+↓
+Ward Member
+↓
+Department Officer
+↓
+Panchayat President
+↓
+Higher Authority
+↓
+Resolved
+
+Automatic escalation rules:
+
+24 hours → escalate to department
+48 hours → escalate to president
+72 hours → escalate to higher authority
+
+------------------------------------------------
+
+VISUAL COMPLAINT TRACKER
+
+Display complaint progress timeline.
+
+Submitted
+Ward Review
+Department Assigned
+In Progress
+Resolved
+
+Use progress bar or step tracker.
+
+------------------------------------------------
+
+MAP BASED COMPLAINT SYSTEM
+
+Display complaints on an interactive map.
+
+Features:
+
+Complaint location pins
+Area issue visualization
+Heatmap of complaints
+Filter complaints by category
+Filter by ward
+
+------------------------------------------------
+
+LIVE NOTIFICATION SYSTEM
+
+Notify citizens when:
+
+Complaint submitted
+Complaint assigned
+Complaint escalated
+Complaint resolved
+
+Notification types:
+
+Email alerts
+Website alerts
+Dashboard notification bell
+
+------------------------------------------------
+
+CITIZEN FEEDBACK SYSTEM
+
+After resolution citizens can:
+
+Rate service (1 to 5 stars)
+Write comments
+
+------------------------------------------------
+
+PUBLIC TRANSPARENCY PAGE
+
+Create a public page showing:
+
+Complaints by ward
+Solved vs pending issues
+Department performance
+Government development works
+Top reported issues
+
+------------------------------------------------
+
+ADMIN DASHBOARD
+
+Admin must control entire system.
+
+Features:
+
+Manage users
+Create officer accounts
+Monitor complaints
+View escalation reports
+Department performance
+System announcements
+Analytics dashboard
+
+------------------------------------------------
+
+ANALYTICS DASHBOARD
+
+Use Chart.js to display:
+
+Total complaints
+Pending complaints
+Resolved complaints
+Department performance
+Monthly complaint trends
+Top problem categories
+
+------------------------------------------------
+
+EXTRA ADVANCED FEATURES
+
+Add the following advanced features:
+
+Complaint photo gallery
+Complaint voting system (citizens can support issues)
+Complaint comment section
+Emergency complaint priority
+Government announcements board
+Department performance score
+Citizen profile page
+Complaint export to PDF
+Complaint search and filter
+Complaint statistics per ward
+Complaint sorting by priority
+Dark mode toggle
+Language switch (Tamil / English)
+Mobile responsive UI
+Loading animations
+Modern card UI
+Smooth hover animations
+
+------------------------------------------------
+
+SECURITY FEATURES
+
+Implement strong security.
+
+Password hashing
+Session authentication
+Input validation
+SQL injection protection
+Secure file upload
+Role based access control
+
+------------------------------------------------
+
+UI DESIGN
+
+Create a professional government portal style interface.
+
+Theme colors:
+
+Dark Blue
+White
+Saffron accent
+Green accent
+
+UI features:
+
+Professional navigation bar
+Dashboard cards
+Complaint tables
+Status badges
+Icons
+Responsive mobile design
+
+------------------------------------------------
+
+DATABASE TABLES
+
+Users
+Complaints
+Escalations
+Feedback
+Departments
+Announcements
+Votes
+Comments
+
+------------------------------------------------
+
+PROJECT STRUCTURE
+
+project/
+
+app.py
+database.db
+
+templates/
+
+login.html
+register.html
+citizen_dashboard.html
+ward_dashboard.html
+officer_dashboard.html
+president_dashboard.html
+admin_dashboard.html
+submit_complaint.html
+complaints.html
+analytics.html
+map.html
+public_dashboard.html
+
+static/
+
+css/
+js/
+uploads/
+
+------------------------------------------------
+
+FINAL REQUIREMENT
+
+The application must:
+
+Run without errors
+Have professional UI
+Implement real governance workflow
+Be ready for engineering project evaluation
+
+The project must successfully run using:
+
+python app.py
