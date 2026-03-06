@@ -1,46 +1,57 @@
 {% extends 'base.html' %}
-  {% block content %}
-  <h2>Ward Member Dashboard (Ward {{ current_user.ward_number }})</h2>
-  <div class="row">
-      <div class="col-md-4 mb-4">
-          <div class="card p-3 text-center bg-primary text-white">
-              <h4>Total Complaints</h4>
-              <h2>{{ complaints|length }}</h2>
-          </div>
-      </div>
-  </div>
-  <h4>Recent Complaints in My Ward</h4>
-  <table class="table table-hover bg-white shadow-sm rounded">
-      <thead>
-          <tr>
-              <th>ID</th>
-              <th>Title</th>
-              <th>Category</th>
-              <th>Priority</th>
-              <th>Status</th>
-              <th>Action</th>
-          </tr>
-      </thead>
-      <tbody>
-          {% for c in complaints %}
-          <tr>
-              <td>{{ c.complaint_id }}</td>
-              <td>{{ c.title }}</td>
-              <td>{{ c.category }}</td>
-              <td class="priority-{{ c.priority }}">{{ c.priority }}</td>
-              <td><span class="status-badge status-{{ c.status|replace(' ', '-') }}">{{ c.status }}</span></td>
-              <td>
-                  <form action="/update_complaint/{{ c.id }}" method="POST" class="d-flex">
-                      <select name="status" class="form-select form-select-sm me-2">
-                          <option value="Submitted" {% if c.status=='Submitted' %}selected{% endif %}>Submitted</option>
-                          <option value="In Progress" {% if c.status=='In Progress' %}selected{% endif %}>In Progress</option>
-                          <option value="Resolved" {% if c.status=='Resolved' %}selected{% endif %}>Resolved</option>
-                      </select>
-                      <button type="submit" class="btn btn-sm btn-dark">Update</button>
-                  </form>
-              </td>
-          </tr>
-          {% endfor %}
-      </tbody>
-  </table>
-  {% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="fw-bold mb-4">Ward Member Dashboard (Ward {{ current_user.ward_number }})</h2>
+    
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card p-4 bg-primary text-white border-0 shadow-sm">
+                <h5 class="opacity-75">Total Complaints</h5>
+                <h2 class="display-5 fw-bold">{{ complaints|length }}</h2>
+                <i class="fas fa-clipboard-list position-absolute end-0 bottom-0 mb-3 me-3 opacity-25 fa-3x"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent py-3 border-0">
+            <h5 class="fw-bold mb-0">Recent Complaints in My Ward</h5>
+        </div>
+        <div class="table-responsive p-3">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in complaints %}
+                    <tr>
+                        <td><code class="small">{{ c.complaint_id }}</code></td>
+                        <td>{{ c.title }}</td>
+                        <td>{{ c.category }}</td>
+                        <td><span class="priority-{{ c.priority }} fw-semibold">{{ c.priority }}</span></td>
+                        <td><span class="status-badge status-{{ c.status|replace(' ', '-') }}">{{ c.status }}</span></td>
+                        <td>
+                            <form action="/update_complaint/{{ c.id }}" method="POST" class="d-flex gap-2">
+                                <select name="status" class="form-select form-select-sm rounded-pill">
+                                    <option value="Submitted" {% if c.status=='Submitted' %}selected{% endif %}>Submitted</option>
+                                    <option value="In Progress" {% if c.status=='In Progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="Resolved" {% if c.status=='Resolved' %}selected{% endif %}>Resolved</option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-dark rounded-pill px-3">Update</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

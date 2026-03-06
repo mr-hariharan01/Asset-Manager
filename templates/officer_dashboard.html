@@ -1,37 +1,44 @@
 {% extends 'base.html' %}
-  {% block content %}
-  <h2>Department Officer Dashboard ({{ current_user.department }})</h2>
-  <p>Manage and resolve complaints assigned to your department.</p>
-  <table class="table table-hover bg-white shadow-sm rounded">
-      <thead>
-          <tr>
-              <th>ID</th>
-              <th>Title</th>
-              <th>Ward</th>
-              <th>Priority</th>
-              <th>Status</th>
-              <th>Action</th>
-          </tr>
-      </thead>
-      <tbody>
-          {% for c in complaints %}
-          <tr>
-              <td>{{ c.complaint_id }}</td>
-              <td>{{ c.title }}</td>
-              <td>{{ c.ward_number }}</td>
-              <td class="priority-{{ c.priority }}">{{ c.priority }}</td>
-              <td><span class="status-badge status-{{ c.status|replace(' ', '-') }}">{{ c.status }}</span></td>
-              <td>
-                  <form action="/update_complaint/{{ c.id }}" method="POST" class="d-flex">
-                      <select name="status" class="form-select form-select-sm me-2">
-                          <option value="In Progress" {% if c.status=='In Progress' %}selected{% endif %}>In Progress</option>
-                          <option value="Resolved" {% if c.status=='Resolved' %}selected{% endif %}>Resolved</option>
-                      </select>
-                      <button type="submit" class="btn btn-sm btn-primary">Save</button>
-                  </form>
-              </td>
-          </tr>
-          {% endfor %}
-      </tbody>
-  </table>
-  {% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="fw-bold mb-2">Department Officer Dashboard</h2>
+    <p class="text-muted mb-4">{{ current_user.department }} Department Oversight</p>
+
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive p-3">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Ward</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in complaints %}
+                    <tr>
+                        <td><code class="small">{{ c.complaint_id }}</code></td>
+                        <td>{{ c.title }}</td>
+                        <td>Ward {{ c.ward_number }}</td>
+                        <td><span class="priority-{{ c.priority }} fw-semibold">{{ c.priority }}</span></td>
+                        <td><span class="status-badge status-{{ c.status|replace(' ', '-') }}">{{ c.status }}</span></td>
+                        <td>
+                            <form action="/update_complaint/{{ c.id }}" method="POST" class="d-flex gap-2">
+                                <select name="status" class="form-select form-select-sm rounded-pill">
+                                    <option value="In Progress" {% if c.status=='In Progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="Resolved" {% if c.status=='Resolved' %}selected{% endif %}>Resolved</option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3">Save</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

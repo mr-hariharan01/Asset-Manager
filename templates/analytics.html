@@ -1,44 +1,67 @@
 {% extends 'base.html' %}
-  {% block content %}
-  <h2 class="mb-4">Governance Analytics Dashboard</h2>
-  <div class="row mb-4">
-      <div class="col-md-4">
-          <div class="card p-4 text-center bg-primary text-white">
-              <h5>Total Complaints</h5>
-              <h2>{{ total }}</h2>
-          </div>
-      </div>
-      <div class="col-md-4">
-          <div class="card p-4 text-center bg-warning text-dark">
-              <h5>Pending / In Progress</h5>
-              <h2>{{ pending }}</h2>
-          </div>
-      </div>
-      <div class="col-md-4">
-          <div class="card p-4 text-center bg-success text-white">
-              <h5>Resolved</h5>
-              <h2>{{ resolved }}</h2>
-          </div>
-      </div>
-  </div>
-  <div class="row">
-      <div class="col-md-6 mx-auto">
-          <div class="card p-4">
-              <canvas id="statusChart"></canvas>
-          </div>
-      </div>
-  </div>
-  <script>
-  const ctx = document.getElementById('statusChart').getContext('2d');
-  new Chart(ctx, {
-      type: 'pie',
-      data: {
-          labels: ['Resolved', 'Pending'],
-          datasets: [{
-              data: [{{ resolved }}, {{ pending }}],
-              backgroundColor: ['#28a745', '#ffc107']
-          }]
-      }
-  });
-  </script>
-  {% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="fw-bold mb-4">Governance Analytics Dashboard</h2>
+    
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card p-4 text-center border-0 shadow-sm bg-primary text-white">
+                <h6 class="opacity-75">Total Complaints</h6>
+                <h2 class="display-5 fw-bold">{{ total }}</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-4 text-center border-0 shadow-sm bg-warning text-dark">
+                <h6 class="opacity-75">Pending / In Progress</h6>
+                <h2 class="display-5 fw-bold">{{ pending }}</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-4 text-center border-0 shadow-sm bg-success text-white">
+                <h6 class="opacity-75">Resolved</h6>
+                <h2 class="display-5 fw-bold">{{ resolved }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm p-4">
+                <h5 class="fw-bold mb-4 text-center">Resolution Status Breakdown</h5>
+                <canvas id="statusChart" style="max-height: 400px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const ctx = document.getElementById('statusChart').getContext('2d');
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Resolved', 'Pending'],
+        datasets: [{
+            data: [{{ resolved }}, {{ pending }}],
+            backgroundColor: ['#138808', '#FF9933'],
+            borderWidth: 0,
+            hoverOffset: 15
+        }]
+    },
+    options: {
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    font: {
+                        size: 14,
+                        family: 'Inter'
+                    }
+                }
+            }
+        },
+        cutout: '70%'
+    }
+});
+</script>
+{% endblock %}

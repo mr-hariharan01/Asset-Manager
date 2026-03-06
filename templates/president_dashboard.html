@@ -1,42 +1,45 @@
 {% extends 'base.html' %}
-  {% block content %}
-  <h2>Panchayat President Dashboard</h2>
-  <div class="row">
-      <div class="col-md-12">
-          <div class="card p-4">
-              <h4>All Regional Complaints Oversight</h4>
-              <table class="table mt-3">
-                  <thead>
-                      <tr>
-                          <th>ID</th>
-                          <th>Issue</th>
-                          <th>Ward</th>
-                          <th>Dept</th>
-                          <th>Status</th>
-                          <th>Action</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-                      {% for c in complaints %}
-                      <tr>
-                          <td>{{ c.complaint_id }}</td>
-                          <td>{{ c.title }}</td>
-                          <td>{{ c.ward_number }}</td>
-                          <td>{{ c.department }}</td>
-                          <td><span class="status-badge status-{{ c.status|replace(' ', '-') }}">{{ c.status }}</span></td>
-                          <td>
-                              <form action="/update_complaint/{{ c.id }}" method="POST" class="d-flex">
-                                  <select name="status" class="form-select form-select-sm me-2">
-                                      <option value="Resolved" {% if c.status=='Resolved' %}selected{% endif %}>Force Resolve</option>
-                                  </select>
-                                  <button type="submit" class="btn btn-sm btn-danger">Escalate/Update</button>
-                              </form>
-                          </td>
-                      </tr>
-                      {% endfor %}
-                  </tbody>
-              </table>
-          </div>
-      </div>
-  </div>
-  {% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="fw-bold mb-4">Panchayat President Dashboard</h2>
+
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header bg-dark-blue text-white py-3 border-0">
+            <h5 class="fw-bold mb-0">Regional Complaints Oversight</h5>
+        </div>
+        <div class="table-responsive p-3">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Issue</th>
+                        <th>Ward</th>
+                        <th>Dept</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in complaints %}
+                    <tr>
+                        <td><code class="small">{{ c.complaint_id }}</code></td>
+                        <td>{{ c.title }}</td>
+                        <td>Ward {{ c.ward_number }}</td>
+                        <td class="small">{{ c.department }}</td>
+                        <td><span class="status-badge status-{{ c.status|replace(' ', '-') }}">{{ c.status }}</span></td>
+                        <td>
+                            <form action="/update_complaint/{{ c.id }}" method="POST" class="d-flex gap-2">
+                                <select name="status" class="form-select form-select-sm rounded-pill">
+                                    <option value="Resolved" {% if c.status=='Resolved' %}selected{% endif %}>Force Resolve</option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-danger rounded-pill px-3">Escalate</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
