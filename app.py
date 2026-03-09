@@ -21,23 +21,34 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 ALLOWED_STATUSES = {'Submitted', 'In Progress', 'Resolved'}
+ROLE_ALIASES = {
+    'citizen': 'citizen',
+    'ward member': 'ward_member',
+    'ward_member': 'ward_member',
+    'department officer': 'officer',
+    'department_officer': 'officer',
+    'officer': 'officer',
+    'president': 'president',
+    'admin': 'admin'
+}
+
+
+def normalize_role(role):
+    return ROLE_ALIASES.get((role or '').strip().lower(), 'citizen')
+
+
 ROLE_STATUS_TRANSITIONS = {
-    'Ward Member': {
+    'officer': {
         'Submitted': {'In Progress'},
         'In Progress': {'Resolved'},
         'Resolved': set()
     },
-    'Department Officer': {
-        'Submitted': {'In Progress'},
-        'In Progress': {'Resolved'},
-        'Resolved': set()
-    },
-    'President': {
+    'president': {
         'Submitted': {'Resolved'},
         'In Progress': {'Resolved'},
         'Resolved': set()
     },
-    'Admin': {
+    'admin': {
         'Submitted': {'In Progress', 'Resolved'},
         'In Progress': {'Resolved'},
         'Resolved': set()
@@ -52,7 +63,7 @@ DEPARTMENT_NAME_MAPPING = {
 
 
 def is_department_officer_authorized(user, complaint):
-    if user.role != 'Department Officer':
+    if normalize_role(user.role) != 'officer':
         return False
 
     user_department = (user.department or '').strip()
@@ -62,13 +73,10 @@ def is_department_officer_authorized(user, complaint):
 
 
 def can_user_update_complaint(user, complaint):
-    if user.role == 'Citizen':
-        return False
-    if user.role == 'Ward Member':
-        return complaint.ward_number == user.ward_number
-    if user.role == 'Department Officer':
+    role = normalize_role(user.role)
+    if role == 'officer':
         return is_department_officer_authorized(user, complaint)
-    if user.role in {'President', 'Admin'}:
+    if role in {'president', 'admin'}:
         return True
     return False
 
@@ -77,7 +85,7 @@ def get_status_options_for_complaint(user, complaint):
     if not can_user_update_complaint(user, complaint):
         return []
 
-    role_transitions = ROLE_STATUS_TRANSITIONS.get(user.role, {})
+    role_transitions = ROLE_STATUS_TRANSITIONS.get(normalize_role(user.role), {})
     return sorted(role_transitions.get(complaint.status, set()))
 
 @login_manager.user_loader
@@ -94,11 +102,11 @@ with app.app_context():
     db.create_all()
     # Create demo accounts
     demo_users = [
-        {'name': 'Citizen', 'email': 'citizen@test.com', 'password': 'citizen123', 'role': 'Citizen', 'ward_number': 1},
-        {'name': 'Ward Member', 'email': 'ward@test.com', 'password': 'ward123', 'role': 'Ward Member', 'ward_number': 1},
-        {'name': 'Department Officer', 'email': 'officer@test.com', 'password': 'officer123', 'role': 'Department Officer', 'department': 'Sanitation'},
-        {'name': 'President', 'email': 'president@test.com', 'password': 'president123', 'role': 'President'},
-        {'name': 'Admin', 'email': 'admin@test.com', 'password': 'admin123', 'role': 'Admin'}
+        {'name': 'Citizen', 'email': 'citizen@test.com', 'password': 'citizen123', 'role': 'citizen', 'ward_number': 1},
+        {'name': 'Ward Member', 'email': 'ward@test.com', 'password': 'ward123', 'role': 'ward_member', 'ward_number': 1},
+        {'name': 'Department Officer', 'email': 'officer@test.com', 'password': 'officer123', 'role': 'officer', 'department': 'Sanitation'},
+        {'name': 'President', 'email': 'president@test.com', 'password': 'president123', 'role': 'president'},
+        {'name': 'Admin', 'email': 'admin@test.com', 'password': 'admin123', 'role': 'admin'}
     ]
     for u in demo_users:
         if not User.query.filter_by(email=u['email']).first():
@@ -111,6 +119,10 @@ with app.app_context():
                 department=u.get('department')
             )
             db.session.add(user)
+    for existing_user in User.query.all():
+        normalized_role = normalize_role(existing_user.role)
+        if existing_user.role != normalized_role:
+            existing_user.role = normalized_role
     db.session.commit()
 
 @app.route('/')
@@ -158,7 +170,7 @@ def register():
             email=email,
             phone=phone,
             password=hash_password(password),
-            role='Citizen',
+            role='citizen',
             district=district,
             panchayat=panchayat,
             ward_number=int(ward_number) if ward_number else None
@@ -176,11 +188,12 @@ def logout():
     return redirect(url_for('login'))
 
 def redirect_dashboard(role):
-    if role == 'Citizen': return redirect(url_for('citizen_dashboard'))
-    elif role == 'Ward Member': return redirect(url_for('ward_dashboard'))
-    elif role == 'Department Officer': return redirect(url_for('officer_dashboard'))
-    elif role == 'President': return redirect(url_for('president_dashboard'))
-    elif role == 'Admin': return redirect(url_for('admin_dashboard'))
+    role = normalize_role(role)
+    if role == 'citizen': return redirect(url_for('citizen_dashboard'))
+    elif role == 'ward_member': return redirect(url_for('ward_dashboard'))
+    elif role == 'officer': return redirect(url_for('officer_dashboard'))
+    elif role == 'president': return redirect(url_for('president_dashboard'))
+    elif role == 'admin': return redirect(url_for('admin_dashboard'))
     return redirect(url_for('index'))
 
 def classify_department_and_priority(text):
@@ -208,14 +221,14 @@ def classify_department_and_priority(text):
 @app.route('/citizen_dashboard')
 @login_required
 def citizen_dashboard():
-    if current_user.role != 'Citizen': return redirect_dashboard(current_user.role)
+    if normalize_role(current_user.role) != 'citizen': return redirect_dashboard(current_user.role)
     complaints = Complaint.query.filter_by(user_id=current_user.id).all()
     return render_template('citizen_dashboard.html', complaints=complaints)
 
 @app.route('/submit_complaint', methods=['GET', 'POST'])
 @login_required
 def submit_complaint():
-    if current_user.role != 'Citizen': return redirect_dashboard(current_user.role)
+    if normalize_role(current_user.role) != 'citizen': return redirect_dashboard(current_user.role)
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
@@ -255,7 +268,7 @@ def submit_complaint():
 @app.route('/ward_dashboard')
 @login_required
 def ward_dashboard():
-    if current_user.role != 'Ward Member': return redirect_dashboard(current_user.role)
+    if normalize_role(current_user.role) != 'ward_member': return redirect_dashboard(current_user.role)
     complaints = Complaint.query.filter_by(ward_number=current_user.ward_number).all()
     status_options = {c.id: get_status_options_for_complaint(current_user, c) for c in complaints}
     return render_template('ward_dashboard.html', complaints=complaints, status_options=status_options)
@@ -263,7 +276,7 @@ def ward_dashboard():
 @app.route('/officer_dashboard')
 @login_required
 def officer_dashboard():
-    if current_user.role != 'Department Officer': return redirect_dashboard(current_user.role)
+    if normalize_role(current_user.role) != 'officer': return redirect_dashboard(current_user.role)
     complaints = Complaint.query.all()
     status_options = {c.id: get_status_options_for_complaint(current_user, c) for c in complaints}
     return render_template('officer_dashboard.html', complaints=complaints, status_options=status_options)
@@ -271,7 +284,7 @@ def officer_dashboard():
 @app.route('/president_dashboard')
 @login_required
 def president_dashboard():
-    if current_user.role != 'President': return redirect_dashboard(current_user.role)
+    if normalize_role(current_user.role) != 'president': return redirect_dashboard(current_user.role)
     complaints = Complaint.query.all()
     status_options = {c.id: get_status_options_for_complaint(current_user, c) for c in complaints}
     return render_template('president_dashboard.html', complaints=complaints, status_options=status_options)
@@ -279,7 +292,7 @@ def president_dashboard():
 @app.route('/admin_dashboard')
 @login_required
 def admin_dashboard():
-    if current_user.role != 'Admin': return redirect_dashboard(current_user.role)
+    if normalize_role(current_user.role) != 'admin': return redirect_dashboard(current_user.role)
     users = User.query.all()
     complaints = Complaint.query.all()
     return render_template('admin_dashboard.html', users=users, complaints=complaints)
@@ -296,7 +309,7 @@ def update_complaint(id):
         flash('Invalid complaint status selected.')
         return redirect(request.referrer or redirect_dashboard(current_user.role))
 
-    allowed_transitions = ROLE_STATUS_TRANSITIONS.get(current_user.role, {}).get(complaint.status, set())
+    allowed_transitions = ROLE_STATUS_TRANSITIONS.get(normalize_role(current_user.role), {}).get(complaint.status, set())
     if status not in allowed_transitions:
         flash('You are not allowed to set this status for the selected complaint.')
         return redirect(request.referrer or redirect_dashboard(current_user.role))
