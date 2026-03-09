@@ -1,16 +1,27 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, abort, send_from_directory
 from models import db, User, Complaint, Feedback
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 import bcrypt
 import os
 import uuid
 from datetime import datetime
+from werkzeug.utils import secure_filename
+from werkzeug.exceptions import RequestEntityTooLarge
+from PIL import Image, UnidentifiedImageError
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['UPLOAD_FOLDER'] = os.path.join(app.instance_path, 'uploads')
+app.config['MAX_CONTENT_LENGTH'] = 4 * 1024 * 1024
+
+ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp'}
+FORMAT_TO_EXTENSION = {
+    'JPEG': '.jpg',
+    'PNG': '.png',
+    'WEBP': '.webp'
+}
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
@@ -205,12 +216,45 @@ def classify_department_and_priority(text):
         
     return department, priority
 
+
+def save_validated_image(image):
+    original_name = secure_filename(image.filename or '')
+    _, uploaded_extension = os.path.splitext(original_name.lower())
+    if uploaded_extension not in ALLOWED_EXTENSIONS:
+        return None, 'Invalid file type. Please upload a JPG, JPEG, PNG, or WEBP image.'
+
+    image.stream.seek(0)
+    try:
+        with Image.open(image.stream) as pil_image:
+            pil_image.verify()
+            detected_format = pil_image.format
+    except (UnidentifiedImageError, OSError):
+        return None, 'Uploaded file is not a valid image.'
+
+    extension = FORMAT_TO_EXTENSION.get((detected_format or '').upper())
+    if extension is None:
+        return None, 'Unsupported image content. Allowed formats are JPG, PNG, and WEBP.'
+
+    image.stream.seek(0)
+    image_filename = f"{uuid.uuid4().hex}{extension}"
+    image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
+    return image_filename, None
+
 @app.route('/citizen_dashboard')
 @login_required
 def citizen_dashboard():
     if current_user.role != 'Citizen': return redirect_dashboard(current_user.role)
     complaints = Complaint.query.filter_by(user_id=current_user.id).all()
     return render_template('citizen_dashboard.html', complaints=complaints)
+
+
+@app.route('/uploads/<path:filename>')
+@login_required
+def uploaded_file(filename):
+    safe_filename = secure_filename(filename)
+    if safe_filename != filename:
+        abort(404)
+    return send_from_directory(app.config['UPLOAD_FOLDER'], safe_filename)
 
 @app.route('/submit_complaint', methods=['GET', 'POST'])
 @login_required
@@ -226,9 +270,10 @@ def submit_complaint():
         image = request.files.get('image')
         image_filename = None
         if image and image.filename != '':
-            ext = image.filename.rsplit('.', 1)[1] if '.' in image.filename else 'jpg'
-            image_filename = f"{uuid.uuid4().hex}.{ext}"
-            image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
+            image_filename, upload_error = save_validated_image(image)
+            if upload_error:
+                flash(upload_error)
+                return redirect(url_for('submit_complaint'))
             
         department, priority = classify_department_and_priority(title + " " + description)
         
@@ -251,6 +296,12 @@ def submit_complaint():
         return redirect(url_for('citizen_dashboard'))
         
     return render_template('submit_complaint.html')
+
+
+@app.errorhandler(RequestEntityTooLarge)
+def handle_file_too_large(_error):
+    flash('Image is too large. Maximum allowed size is 4 MB.')
+    return redirect(url_for('submit_complaint'))
 
 @app.route('/ward_dashboard')
 @login_required
