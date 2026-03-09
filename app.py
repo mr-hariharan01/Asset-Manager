@@ -20,6 +20,18 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+DEPARTMENT_ALIASES = {
+    'electricity': 'Electricity Department',
+    'electricity department': 'Electricity Department',
+    'sanitation': 'Sanitation Department',
+    'sanitation department': 'Sanitation Department',
+    'public works': 'Public Works Department',
+    'public works department': 'Public Works Department',
+    'water supply': 'Water Supply Department',
+    'water supply department': 'Water Supply Department',
+    'general': 'General',
+}
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -30,13 +42,18 @@ def hash_password(password):
 def check_password(password, hashed):
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
+def normalize_department_name(department):
+    if not department:
+        return None
+    return DEPARTMENT_ALIASES.get(department.strip().lower(), department.strip())
+
 with app.app_context():
     db.create_all()
     # Create demo accounts
     demo_users = [
         {'name': 'Citizen', 'email': 'citizen@test.com', 'password': 'citizen123', 'role': 'Citizen', 'ward_number': 1},
         {'name': 'Ward Member', 'email': 'ward@test.com', 'password': 'ward123', 'role': 'Ward Member', 'ward_number': 1},
-        {'name': 'Department Officer', 'email': 'officer@test.com', 'password': 'officer123', 'role': 'Department Officer', 'department': 'Sanitation'},
+        {'name': 'Department Officer', 'email': 'officer@test.com', 'password': 'officer123', 'role': 'Department Officer', 'department': 'Sanitation Department'},
         {'name': 'President', 'email': 'president@test.com', 'password': 'president123', 'role': 'President'},
         {'name': 'Admin', 'email': 'admin@test.com', 'password': 'admin123', 'role': 'Admin'}
     ]
@@ -48,9 +65,16 @@ with app.app_context():
                 password=hash_password(u['password']),
                 role=u['role'],
                 ward_number=u.get('ward_number'),
-                department=u.get('department')
+                department=normalize_department_name(u.get('department'))
             )
             db.session.add(user)
+
+    for user in User.query.filter(User.department.isnot(None)).all():
+        user.department = normalize_department_name(user.department)
+
+    for complaint in Complaint.query.all():
+        complaint.department = normalize_department_name(complaint.department) or 'General'
+
     db.session.commit()
 
 @app.route('/')
@@ -203,8 +227,9 @@ def ward_dashboard():
 @login_required
 def officer_dashboard():
     if current_user.role != 'Department Officer': return redirect_dashboard(current_user.role)
-    complaints = Complaint.query.all()
-    return render_template('officer_dashboard.html', complaints=complaints)
+    officer_department = normalize_department_name(current_user.department)
+    complaints = Complaint.query.filter_by(department=officer_department).all() if officer_department else []
+    return render_template('officer_dashboard.html', complaints=complaints, officer_department=officer_department)
 
 @app.route('/president_dashboard')
 @login_required
