@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, abort
 from models import db, User, Complaint, Feedback
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from forms import RegistrationForm, ComplaintSubmissionForm
 import bcrypt
 import os
 import uuid
@@ -135,39 +136,31 @@ def login():
 def register():
     if current_user.is_authenticated:
         return redirect_dashboard(current_user.role)
-    if request.method == 'POST':
-        name = request.form.get('name')
-        email = request.form.get('email')
-        phone = request.form.get('phone')
-        password = request.form.get('password')
-        confirm_password = request.form.get('confirm_password')
-        district = request.form.get('district')
-        panchayat = request.form.get('panchayat')
-        ward_number = request.form.get('ward_number')
-        
-        if password != confirm_password:
-            flash('Passwords do not match')
-            return redirect(url_for('register'))
-            
-        if User.query.filter_by(email=email).first():
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        if User.query.filter_by(email=form.email.data).first():
             flash('Email already registered')
             return redirect(url_for('register'))
             
         user = User(
-            name=name,
-            email=email,
-            phone=phone,
-            password=hash_password(password),
+            name=form.name.data,
+            email=form.email.data,
+            phone=form.phone.data,
+            password=hash_password(form.password.data),
             role='Citizen',
-            district=district,
-            panchayat=panchayat,
-            ward_number=int(ward_number) if ward_number else None
+            district=form.district.data,
+            panchayat=form.panchayat.data,
+            ward_number=form.ward_number.data
         )
         db.session.add(user)
         db.session.commit()
         login_user(user)
         return redirect(url_for('citizen_dashboard'))
-    return render_template('register.html')
+    if request.method == 'POST':
+        for field_errors in form.errors.values():
+            for error in field_errors:
+                flash(error)
+    return render_template('register.html', form=form)
 
 @app.route('/logout')
 @login_required
@@ -216,13 +209,8 @@ def citizen_dashboard():
 @login_required
 def submit_complaint():
     if current_user.role != 'Citizen': return redirect_dashboard(current_user.role)
-    if request.method == 'POST':
-        title = request.form.get('title')
-        description = request.form.get('description')
-        category = request.form.get('category')
-        latitude = request.form.get('latitude')
-        longitude = request.form.get('longitude')
-        
+    form = ComplaintSubmissionForm()
+    if form.validate_on_submit():
         image = request.files.get('image')
         image_filename = None
         if image and image.filename != '':
@@ -230,17 +218,17 @@ def submit_complaint():
             image_filename = f"{uuid.uuid4().hex}.{ext}"
             image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
             
-        department, priority = classify_department_and_priority(title + " " + description)
+        department, priority = classify_department_and_priority(f"{form.title.data} {form.description.data}")
         
         complaint = Complaint(
             complaint_id=f"CMP-{uuid.uuid4().hex[:8].upper()}",
-            title=title,
-            description=description,
-            category=category,
+            title=form.title.data,
+            description=form.description.data,
+            category=form.category.data,
             department=department,
             ward_number=current_user.ward_number or 1,
-            latitude=float(latitude) if latitude else None,
-            longitude=float(longitude) if longitude else None,
+            latitude=form.latitude.data,
+            longitude=form.longitude.data,
             image_filename=image_filename,
             priority=priority,
             user_id=current_user.id
@@ -249,8 +237,13 @@ def submit_complaint():
         db.session.commit()
         flash('Complaint submitted successfully')
         return redirect(url_for('citizen_dashboard'))
-        
-    return render_template('submit_complaint.html')
+    if request.method == 'POST':
+        for field_errors in form.errors.values():
+            for error in field_errors:
+                flash(error)
+        return redirect(url_for('submit_complaint'))
+
+    return render_template('submit_complaint.html', form=form)
 
 @app.route('/ward_dashboard')
 @login_required

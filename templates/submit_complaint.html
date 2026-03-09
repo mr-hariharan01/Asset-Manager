@@ -3,25 +3,20 @@
   <div class="card p-4 mx-auto" style="max-width: 800px;">
       <h3>Report a Public Issue</h3>
       <form method="POST" enctype="multipart/form-data">
+          {{ form.hidden_tag() }}
           <div class="mb-3">
               <label>Complaint Title</label>
-              <input type="text" name="title" class="form-control" required placeholder="e.g., Streetlight not working">
+              {{ form.title(class="form-control", placeholder="e.g., Streetlight not working") }}
           </div>
           <div class="mb-3">
               <label>Description</label>
-              <textarea name="description" class="form-control" rows="4" required placeholder="Describe the problem in detail..."></textarea>
+              {{ form.description(class="form-control", rows="4", placeholder="Describe the problem in detail...") }}
               <small class="text-muted">AI will automatically classify the department based on your description.</small>
           </div>
           <div class="row">
               <div class="col-md-6 mb-3">
                   <label>Category</label>
-                  <select name="category" class="form-select" required>
-                      <option value="Electrical">Electricity & Streetlights</option>
-                      <option value="Sanitation">Garbage & Sanitation</option>
-                      <option value="Roads">Roads & Infrastructure</option>
-                      <option value="Water">Water Supply</option>
-                      <option value="Other">Other</option>
-                  </select>
+                  {{ form.category(class="form-select") }}
               </div>
               <div class="col-md-6 mb-3">
                   <label>Photo Evidence (Optional)</label>
@@ -33,8 +28,8 @@
               <label>Location</label>
               <div class="d-flex mb-2">
                   <button type="button" class="btn btn-secondary me-2" onclick="getLocation()">Get GPS Location</button>
-                  <input type="text" id="lat" name="latitude" class="form-control me-2" placeholder="Latitude" readonly>
-                  <input type="text" id="lng" name="longitude" class="form-control" placeholder="Longitude" readonly>
+                  {{ form.latitude(id="lat", class="form-control me-2", placeholder="Latitude", readonly=true) }}
+                  {{ form.longitude(id="lng", class="form-control", placeholder="Longitude", readonly=true) }}
               </div>
           </div>
           
