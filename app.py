@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from models import db, User, Complaint, Feedback
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from werkzeug.exceptions import RequestEntityTooLarge
+from werkzeug.utils import secure_filename
 import bcrypt
 import os
 import uuid
@@ -10,9 +12,22 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
+app.config['UPLOAD_FOLDER'] = os.path.join(app.instance_path, 'uploads')
+
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp'}
+ALLOWED_MIME_TYPES = {'image/jpeg', 'image/png', 'image/webp'}
+
+
+def is_allowed_file(filename, mime_type):
+    safe_name = secure_filename(filename)
+    if '.' not in safe_name:
+        return False
+    ext = safe_name.rsplit('.', 1)[1].lower()
+    return ext in ALLOWED_EXTENSIONS and mime_type in ALLOWED_MIME_TYPES
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.chmod(app.config['UPLOAD_FOLDER'], 0o750)
 
 db.init_app(app)
 
@@ -166,7 +181,12 @@ def submit_complaint():
         image = request.files.get('image')
         image_filename = None
         if image and image.filename != '':
-            ext = image.filename.rsplit('.', 1)[1] if '.' in image.filename else 'jpg'
+            if not is_allowed_file(image.filename, image.mimetype):
+                flash('Invalid image. Please upload a JPG, JPEG, PNG, or WEBP file.')
+                return redirect(url_for('submit_complaint'))
+
+            safe_original_name = secure_filename(image.filename)
+            ext = safe_original_name.rsplit('.', 1)[1].lower()
             image_filename = f"{uuid.uuid4().hex}.{ext}"
             image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
             
@@ -259,6 +279,12 @@ def analytics():
 def public_complaints():
     complaints = Complaint.query.order_by(Complaint.timestamp.desc()).all()
     return render_template('complaints.html', complaints=complaints)
+
+
+@app.errorhandler(RequestEntityTooLarge)
+def handle_file_too_large(error):
+    flash('Uploaded file is too large. Maximum allowed size is 5 MB.')
+    return redirect(url_for('submit_complaint')), 413
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
