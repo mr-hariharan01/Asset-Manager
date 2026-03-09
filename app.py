@@ -2,12 +2,41 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from models import db, User, Complaint, Feedback
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 import bcrypt
+import click
 import os
 import uuid
 from datetime import datetime
 
+
+def get_secret_key():
+    """Load SECRET_KEY from environment with a safe development fallback."""
+    secret_key = os.environ.get('SECRET_KEY')
+    if secret_key:
+        return secret_key
+    return 'dev-secret-key-change-me'
+
+
+def get_demo_users():
+    return [
+        {'name': 'Citizen', 'email': 'citizen@test.com', 'password': 'citizen123', 'role': 'Citizen', 'ward_number': 1},
+        {'name': 'Ward Member', 'email': 'ward@test.com', 'password': 'ward123', 'role': 'Ward Member', 'ward_number': 1},
+        {'name': 'Department Officer', 'email': 'officer@test.com', 'password': 'officer123', 'role': 'Department Officer', 'department': 'Sanitation'},
+        {'name': 'President', 'email': 'president@test.com', 'password': 'president123', 'role': 'President'},
+        {'name': 'Admin', 'email': 'admin@test.com', 'password': 'admin123', 'role': 'Admin'},
+    ]
+
+
+def is_production_environment():
+    env = os.environ.get('FLASK_ENV') or os.environ.get('ENV') or os.environ.get('APP_ENV') or ''
+    return env.lower() == 'production'
+
+
+def should_seed_demo_users():
+    return os.environ.get('ENABLE_DEMO_SEED', '').lower() == 'true'
+
+
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'supersecretkey'
+app.config['SECRET_KEY'] = get_secret_key()
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
@@ -20,42 +49,65 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+
 def hash_password(password):
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
 
 def check_password(password, hashed):
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
+
+def seed_demo_users():
+    if is_production_environment():
+        raise RuntimeError('Demo seeding is disabled in production environments.')
+
+    if not should_seed_demo_users():
+        raise RuntimeError('Set ENABLE_DEMO_SEED=true to allow demo seeding.')
+
+    created_count = 0
+    for u in get_demo_users():
+        if User.query.filter_by(email=u['email']).first():
+            continue
+        user = User(
+            name=u['name'],
+            email=u['email'],
+            password=hash_password(u['password']),
+            role=u['role'],
+            ward_number=u.get('ward_number'),
+            department=u.get('department'),
+        )
+        db.session.add(user)
+        created_count += 1
+    db.session.commit()
+    return created_count
+
+
+@app.cli.command('seed-demo-users')
+def seed_demo_users_command():
+    """Seed demo users when ENABLE_DEMO_SEED=true in non-production environments."""
+    db.create_all()
+    try:
+        created_count = seed_demo_users()
+    except RuntimeError as err:
+        raise click.ClickException(str(err)) from err
+
+    click.echo(f'Demo seed complete. Added {created_count} user(s).')
+
+
 with app.app_context():
     db.create_all()
-    # Create demo accounts
-    demo_users = [
-        {'name': 'Citizen', 'email': 'citizen@test.com', 'password': 'citizen123', 'role': 'Citizen', 'ward_number': 1},
-        {'name': 'Ward Member', 'email': 'ward@test.com', 'password': 'ward123', 'role': 'Ward Member', 'ward_number': 1},
-        {'name': 'Department Officer', 'email': 'officer@test.com', 'password': 'officer123', 'role': 'Department Officer', 'department': 'Sanitation'},
-        {'name': 'President', 'email': 'president@test.com', 'password': 'president123', 'role': 'President'},
-        {'name': 'Admin', 'email': 'admin@test.com', 'password': 'admin123', 'role': 'Admin'}
-    ]
-    for u in demo_users:
-        if not User.query.filter_by(email=u['email']).first():
-            user = User(
-                name=u['name'],
-                email=u['email'],
-                password=hash_password(u['password']),
-                role=u['role'],
-                ward_number=u.get('ward_number'),
-                department=u.get('department')
-            )
-            db.session.add(user)
-    db.session.commit()
+
 
 @app.route('/')
 def index():
     return render_template('public_dashboard.html')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -71,6 +123,7 @@ def login():
         flash('Invalid email or password')
     return render_template('login.html')
 
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -84,15 +137,15 @@ def register():
         district = request.form.get('district')
         panchayat = request.form.get('panchayat')
         ward_number = request.form.get('ward_number')
-        
+
         if password != confirm_password:
             flash('Passwords do not match')
             return redirect(url_for('register'))
-            
+
         if User.query.filter_by(email=email).first():
             flash('Email already registered')
             return redirect(url_for('register'))
-            
+
         user = User(
             name=name,
             email=email,
@@ -101,7 +154,7 @@ def register():
             role='Citizen',
             district=district,
             panchayat=panchayat,
-            ward_number=int(ward_number) if ward_number else None
+            ward_number=int(ward_number) if ward_number else None,
         )
         db.session.add(user)
         db.session.commit()
@@ -109,19 +162,27 @@ def register():
         return redirect(url_for('citizen_dashboard'))
     return render_template('register.html')
 
+
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('login'))
 
+
 def redirect_dashboard(role):
-    if role == 'Citizen': return redirect(url_for('citizen_dashboard'))
-    elif role == 'Ward Member': return redirect(url_for('ward_dashboard'))
-    elif role == 'Department Officer': return redirect(url_for('officer_dashboard'))
-    elif role == 'President': return redirect(url_for('president_dashboard'))
-    elif role == 'Admin': return redirect(url_for('admin_dashboard'))
+    if role == 'Citizen':
+        return redirect(url_for('citizen_dashboard'))
+    elif role == 'Ward Member':
+        return redirect(url_for('ward_dashboard'))
+    elif role == 'Department Officer':
+        return redirect(url_for('officer_dashboard'))
+    elif role == 'President':
+        return redirect(url_for('president_dashboard'))
+    elif role == 'Admin':
+        return redirect(url_for('admin_dashboard'))
     return redirect(url_for('index'))
+
 
 def classify_department_and_priority(text):
     text = text.lower()
@@ -139,39 +200,43 @@ def classify_department_and_priority(text):
     elif 'water' in text or 'leak' in text or 'drainage' in text or 'pipe' in text:
         department = 'Water Supply Department'
         priority = 'High'
-    
+
     if 'danger' in text or 'accident' in text or 'urgent' in text or 'safety' in text:
         priority = 'High'
-        
+
     return department, priority
+
 
 @app.route('/citizen_dashboard')
 @login_required
 def citizen_dashboard():
-    if current_user.role != 'Citizen': return redirect_dashboard(current_user.role)
+    if current_user.role != 'Citizen':
+        return redirect_dashboard(current_user.role)
     complaints = Complaint.query.filter_by(user_id=current_user.id).all()
     return render_template('citizen_dashboard.html', complaints=complaints)
+
 
 @app.route('/submit_complaint', methods=['GET', 'POST'])
 @login_required
 def submit_complaint():
-    if current_user.role != 'Citizen': return redirect_dashboard(current_user.role)
+    if current_user.role != 'Citizen':
+        return redirect_dashboard(current_user.role)
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
         category = request.form.get('category')
         latitude = request.form.get('latitude')
         longitude = request.form.get('longitude')
-        
+
         image = request.files.get('image')
         image_filename = None
         if image and image.filename != '':
             ext = image.filename.rsplit('.', 1)[1] if '.' in image.filename else 'jpg'
             image_filename = f"{uuid.uuid4().hex}.{ext}"
             image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
-            
+
         department, priority = classify_department_and_priority(title + " " + description)
-        
+
         complaint = Complaint(
             complaint_id=f"CMP-{uuid.uuid4().hex[:8].upper()}",
             title=title,
@@ -183,43 +248,52 @@ def submit_complaint():
             longitude=float(longitude) if longitude else None,
             image_filename=image_filename,
             priority=priority,
-            user_id=current_user.id
+            user_id=current_user.id,
         )
         db.session.add(complaint)
         db.session.commit()
         flash('Complaint submitted successfully')
         return redirect(url_for('citizen_dashboard'))
-        
+
     return render_template('submit_complaint.html')
+
 
 @app.route('/ward_dashboard')
 @login_required
 def ward_dashboard():
-    if current_user.role != 'Ward Member': return redirect_dashboard(current_user.role)
+    if current_user.role != 'Ward Member':
+        return redirect_dashboard(current_user.role)
     complaints = Complaint.query.filter_by(ward_number=current_user.ward_number).all()
     return render_template('ward_dashboard.html', complaints=complaints)
+
 
 @app.route('/officer_dashboard')
 @login_required
 def officer_dashboard():
-    if current_user.role != 'Department Officer': return redirect_dashboard(current_user.role)
+    if current_user.role != 'Department Officer':
+        return redirect_dashboard(current_user.role)
     complaints = Complaint.query.all()
     return render_template('officer_dashboard.html', complaints=complaints)
+
 
 @app.route('/president_dashboard')
 @login_required
 def president_dashboard():
-    if current_user.role != 'President': return redirect_dashboard(current_user.role)
+    if current_user.role != 'President':
+        return redirect_dashboard(current_user.role)
     complaints = Complaint.query.all()
     return render_template('president_dashboard.html', complaints=complaints)
+
 
 @app.route('/admin_dashboard')
 @login_required
 def admin_dashboard():
-    if current_user.role != 'Admin': return redirect_dashboard(current_user.role)
+    if current_user.role != 'Admin':
+        return redirect_dashboard(current_user.role)
     users = User.query.all()
     complaints = Complaint.query.all()
     return render_template('admin_dashboard.html', users=users, complaints=complaints)
+
 
 @app.route('/update_complaint/<int:id>', methods=['POST'])
 @login_required
@@ -232,21 +306,25 @@ def update_complaint(id):
         flash(f'Complaint {complaint.complaint_id} status updated to {status}')
     return redirect(request.referrer)
 
+
 @app.route('/map')
 def view_map():
     complaints = Complaint.query.all()
     complaints_data = []
     for c in complaints:
         if c.latitude and c.longitude:
-            complaints_data.append({
-                'id': c.complaint_id,
-                'title': c.title,
-                'lat': c.latitude,
-                'lng': c.longitude,
-                'status': c.status,
-                'priority': c.priority
-            })
+            complaints_data.append(
+                {
+                    'id': c.complaint_id,
+                    'title': c.title,
+                    'lat': c.latitude,
+                    'lng': c.longitude,
+                    'status': c.status,
+                    'priority': c.priority,
+                }
+            )
     return render_template('map.html', complaints=complaints_data)
+
 
 @app.route('/analytics')
 def analytics():
@@ -255,10 +333,12 @@ def analytics():
     resolved = Complaint.query.filter_by(status='Resolved').count()
     return render_template('analytics.html', total=total, pending=pending, resolved=resolved)
 
+
 @app.route('/complaints')
 def public_complaints():
     complaints = Complaint.query.order_by(Complaint.timestamp.desc()).all()
     return render_template('complaints.html', complaints=complaints)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
