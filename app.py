@@ -1,10 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, abort
 from models import db, User, Complaint, Feedback
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from flask_wtf.csrf import CSRFProtect, CSRFError
 import bcrypt
 import os
 import uuid
 from datetime import datetime
+
+login_manager = LoginManager()
+csrf = CSRFProtect()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
@@ -12,13 +16,39 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-db.init_app(app)
+def create_app():
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
+    db.init_app(app)
+    login_manager.init_app(app)
+    login_manager.login_view = 'login'
+    csrf.init_app(app)
+
+    with app.app_context():
+        db.create_all()
+        # Create demo accounts
+        demo_users = [
+            {'name': 'Citizen', 'email': 'citizen@test.com', 'password': 'citizen123', 'role': 'Citizen', 'ward_number': 1},
+            {'name': 'Ward Member', 'email': 'ward@test.com', 'password': 'ward123', 'role': 'Ward Member', 'ward_number': 1},
+            {'name': 'Department Officer', 'email': 'officer@test.com', 'password': 'officer123', 'role': 'Department Officer', 'department': 'Sanitation'},
+            {'name': 'President', 'email': 'president@test.com', 'password': 'president123', 'role': 'President'},
+            {'name': 'Admin', 'email': 'admin@test.com', 'password': 'admin123', 'role': 'Admin'}
+        ]
+        for u in demo_users:
+            if not User.query.filter_by(email=u['email']).first():
+                user = User(
+                    name=u['name'],
+                    email=u['email'],
+                    password=hash_password(u['password']),
+                    role=u['role'],
+                    ward_number=u.get('ward_number'),
+                    department=u.get('department')
+                )
+                db.session.add(user)
+        db.session.commit()
+
+    return app
 
 ALLOWED_STATUSES = {'Submitted', 'In Progress', 'Resolved'}
 ROLE_STATUS_TRANSITIONS = {
@@ -90,28 +120,13 @@ def hash_password(password):
 def check_password(password, hashed):
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
-with app.app_context():
-    db.create_all()
-    # Create demo accounts
-    demo_users = [
-        {'name': 'Citizen', 'email': 'citizen@test.com', 'password': 'citizen123', 'role': 'Citizen', 'ward_number': 1},
-        {'name': 'Ward Member', 'email': 'ward@test.com', 'password': 'ward123', 'role': 'Ward Member', 'ward_number': 1},
-        {'name': 'Department Officer', 'email': 'officer@test.com', 'password': 'officer123', 'role': 'Department Officer', 'department': 'Sanitation'},
-        {'name': 'President', 'email': 'president@test.com', 'password': 'president123', 'role': 'President'},
-        {'name': 'Admin', 'email': 'admin@test.com', 'password': 'admin123', 'role': 'Admin'}
-    ]
-    for u in demo_users:
-        if not User.query.filter_by(email=u['email']).first():
-            user = User(
-                name=u['name'],
-                email=u['email'],
-                password=hash_password(u['password']),
-                role=u['role'],
-                ward_number=u.get('ward_number'),
-                department=u.get('department')
-            )
-            db.session.add(user)
-    db.session.commit()
+app = create_app()
+
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    return render_template('csrf_error.html', reason=e.description), 403
+
 
 @app.route('/')
 def index():

@@ -3,6 +3,7 @@
   <div class="card p-4 mx-auto" style="max-width: 800px;">
       <h3>Report a Public Issue</h3>
       <form method="POST" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="mb-3">
               <label>Complaint Title</label>
               <input type="text" name="title" class="form-control" required placeholder="e.g., Streetlight not working">

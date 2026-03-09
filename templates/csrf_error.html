@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm p-4 text-center">
+                <h2 class="fw-bold text-danger mb-3">Security check failed</h2>
+                <p class="text-muted mb-2">Your form session has expired or the request could not be verified.</p>
+                <p class="small text-muted mb-4">Please go back, refresh the page, and submit the form again.</p>
+                {% if reason %}
+                <div class="alert alert-warning small mb-4">{{ reason }}</div>
+                {% endif %}
+                <a href="{{ url_for('index') }}" class="btn btn-primary">Return to Home</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

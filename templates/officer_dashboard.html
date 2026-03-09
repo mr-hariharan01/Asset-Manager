@@ -29,6 +29,7 @@
                             {% set options = status_options.get(c.id, []) %}
                             {% if options %}
                             <form action="/update_complaint/{{ c.id }}" method="POST" class="d-flex gap-2">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <select name="status" class="form-select form-select-sm rounded-pill">
                                     {% for option in options %}
                                     <option value="{{ option }}">{{ option }}</option>
