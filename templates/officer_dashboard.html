@@ -2,9 +2,10 @@
 {% block content %}
 <div class="container py-4">
     <h2 class="fw-bold mb-2">Department Officer Dashboard</h2>
-    <p class="text-muted mb-4">{{ current_user.department }} Department Oversight</p>
+    <p class="text-muted mb-4">{{ officer_department or current_user.department }} Department Oversight</p>
 
     <div class="card border-0 shadow-sm">
+        {% if complaints %}
         <div class="table-responsive p-3">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
@@ -39,6 +40,12 @@
                 </tbody>
             </table>
         </div>
+        {% else %}
+        <div class="p-4 text-center">
+            <h5 class="fw-semibold mb-2">No complaints for your department</h5>
+            <p class="text-muted mb-0">There are currently no complaints assigned to {{ officer_department or 'your department' }}.</p>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
