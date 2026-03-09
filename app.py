@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, abort
 from models import db, User, Complaint, Feedback
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 import bcrypt
@@ -19,6 +19,66 @@ db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+ALLOWED_STATUSES = {'Submitted', 'In Progress', 'Resolved'}
+ROLE_STATUS_TRANSITIONS = {
+    'Ward Member': {
+        'Submitted': {'In Progress'},
+        'In Progress': {'Resolved'},
+        'Resolved': set()
+    },
+    'Department Officer': {
+        'Submitted': {'In Progress'},
+        'In Progress': {'Resolved'},
+        'Resolved': set()
+    },
+    'President': {
+        'Submitted': {'Resolved'},
+        'In Progress': {'Resolved'},
+        'Resolved': set()
+    },
+    'Admin': {
+        'Submitted': {'In Progress', 'Resolved'},
+        'In Progress': {'Resolved'},
+        'Resolved': set()
+    }
+}
+DEPARTMENT_NAME_MAPPING = {
+    'Sanitation': 'Sanitation Department',
+    'Electricity': 'Electricity Department',
+    'Public Works': 'Public Works Department',
+    'Water Supply': 'Water Supply Department'
+}
+
+
+def is_department_officer_authorized(user, complaint):
+    if user.role != 'Department Officer':
+        return False
+
+    user_department = (user.department or '').strip()
+    complaint_department = (complaint.department or '').strip()
+    mapped_department = DEPARTMENT_NAME_MAPPING.get(user_department, user_department)
+    return complaint_department in {user_department, mapped_department}
+
+
+def can_user_update_complaint(user, complaint):
+    if user.role == 'Citizen':
+        return False
+    if user.role == 'Ward Member':
+        return complaint.ward_number == user.ward_number
+    if user.role == 'Department Officer':
+        return is_department_officer_authorized(user, complaint)
+    if user.role in {'President', 'Admin'}:
+        return True
+    return False
+
+
+def get_status_options_for_complaint(user, complaint):
+    if not can_user_update_complaint(user, complaint):
+        return []
+
+    role_transitions = ROLE_STATUS_TRANSITIONS.get(user.role, {})
+    return sorted(role_transitions.get(complaint.status, set()))
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -197,21 +257,24 @@ def submit_complaint():
 def ward_dashboard():
     if current_user.role != 'Ward Member': return redirect_dashboard(current_user.role)
     complaints = Complaint.query.filter_by(ward_number=current_user.ward_number).all()
-    return render_template('ward_dashboard.html', complaints=complaints)
+    status_options = {c.id: get_status_options_for_complaint(current_user, c) for c in complaints}
+    return render_template('ward_dashboard.html', complaints=complaints, status_options=status_options)
 
 @app.route('/officer_dashboard')
 @login_required
 def officer_dashboard():
     if current_user.role != 'Department Officer': return redirect_dashboard(current_user.role)
     complaints = Complaint.query.all()
-    return render_template('officer_dashboard.html', complaints=complaints)
+    status_options = {c.id: get_status_options_for_complaint(current_user, c) for c in complaints}
+    return render_template('officer_dashboard.html', complaints=complaints, status_options=status_options)
 
 @app.route('/president_dashboard')
 @login_required
 def president_dashboard():
     if current_user.role != 'President': return redirect_dashboard(current_user.role)
     complaints = Complaint.query.all()
-    return render_template('president_dashboard.html', complaints=complaints)
+    status_options = {c.id: get_status_options_for_complaint(current_user, c) for c in complaints}
+    return render_template('president_dashboard.html', complaints=complaints, status_options=status_options)
 
 @app.route('/admin_dashboard')
 @login_required
@@ -226,11 +289,22 @@ def admin_dashboard():
 def update_complaint(id):
     complaint = Complaint.query.get_or_404(id)
     status = request.form.get('status')
-    if status:
-        complaint.status = status
-        db.session.commit()
-        flash(f'Complaint {complaint.complaint_id} status updated to {status}')
-    return redirect(request.referrer)
+    if not can_user_update_complaint(current_user, complaint):
+        abort(403)
+
+    if status not in ALLOWED_STATUSES:
+        flash('Invalid complaint status selected.')
+        return redirect(request.referrer or redirect_dashboard(current_user.role))
+
+    allowed_transitions = ROLE_STATUS_TRANSITIONS.get(current_user.role, {}).get(complaint.status, set())
+    if status not in allowed_transitions:
+        flash('You are not allowed to set this status for the selected complaint.')
+        return redirect(request.referrer or redirect_dashboard(current_user.role))
+
+    complaint.status = status
+    db.session.commit()
+    flash(f'Complaint {complaint.complaint_id} status updated to {status}')
+    return redirect(request.referrer or redirect_dashboard(current_user.role))
 
 @app.route('/map')
 def view_map():

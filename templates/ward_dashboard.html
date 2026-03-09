@@ -38,14 +38,19 @@
                         <td><span class="priority-{{ c.priority }} fw-semibold">{{ c.priority }}</span></td>
                         <td><span class="status-badge status-{{ c.status|replace(' ', '-') }}">{{ c.status }}</span></td>
                         <td>
+                            {% set options = status_options.get(c.id, []) %}
+                            {% if options %}
                             <form action="/update_complaint/{{ c.id }}" method="POST" class="d-flex gap-2">
                                 <select name="status" class="form-select form-select-sm rounded-pill">
-                                    <option value="Submitted" {% if c.status=='Submitted' %}selected{% endif %}>Submitted</option>
-                                    <option value="In Progress" {% if c.status=='In Progress' %}selected{% endif %}>In Progress</option>
-                                    <option value="Resolved" {% if c.status=='Resolved' %}selected{% endif %}>Resolved</option>
+                                    {% for option in options %}
+                                    <option value="{{ option }}">{{ option }}</option>
+                                    {% endfor %}
                                 </select>
                                 <button type="submit" class="btn btn-sm btn-dark rounded-pill px-3">Update</button>
                             </form>
+                            {% else %}
+                            <span class="text-muted small">No transitions available</span>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
